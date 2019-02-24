@@ -2,6 +2,7 @@ const ArgumentParser = require('argparse').ArgumentParser
 const request = require('request')
 const async = require('async')
 const fs = require('fs')
+const child_process = require('child_process')
 const DOMParser = require('xmldom').DOMParser
 
 var parser = new ArgumentParser({
@@ -45,16 +46,28 @@ function downloadSegment (data, callback) {
 }
 
 function downloadM3u8 (id, url, callback) {
+  let files = []
+
   request(url, (err, response, body) => {
     let mp4Urls = body.split(/\n/g).filter(str => !str.match(/^(#.*|)$/))
     async.eachOf(mp4Urls, (url, index, done) => {
+      let file = '/tmp/' + id + '-' + index + '.mp4'
+      files.push(file)
+
       request({
         method: 'GET',
         url,
         encoding: null
       }, url, (err, response, body) => {
-        fs.writeFile('/tmp/' + id + '-' + index + '.mp4', body, done)
+        fs.writeFile(file, body, done)
       })
-    }, callback)
+    }, () => {
+      console.log(id + ': starting ffmpeg')
+      let cmd = 'ffmpeg -i "concat:' + files.join('|') + '" -c copy -bsf:a aac_adtstoasc -y ' + id + '.mp4'
+      child_process.exec(cmd, (err, stdout, stderr) => {
+        console.log('* Wrote file ' + id + '.mp4')
+        callback()
+      })
+    })
   })
 }
