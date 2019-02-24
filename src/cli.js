@@ -1,6 +1,7 @@
 const ArgumentParser = require('argparse').ArgumentParser
 const request = require('request')
 const async = require('async')
+const fs = require('fs')
 const DOMParser = require('xmldom').DOMParser
 
 var parser = new ArgumentParser({
@@ -47,8 +48,13 @@ function downloadM3u8 (id, url, callback) {
   request(url, (err, response, body) => {
     let mp4Urls = body.split(/\n/g).filter(str => !str.match(/^(#.*|)$/))
     async.eachOf(mp4Urls, (url, index, done) => {
-      console.log(id, index, url)
-      done()
+      request({
+        method: 'GET',
+        url,
+        encoding: null
+      }, url, (err, response, body) => {
+        fs.writeFile('/tmp/' + id + '-' + index + '.mp4', body, done)
+      })
     }, callback)
   })
 }
