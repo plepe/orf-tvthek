@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "argparse": "^1.0.10",
+    "async": "^2.6.2",
     "dom-parse": "^1.2.1",
     "request": "^2.88.0",
     "xmldom": "^0.1.27"

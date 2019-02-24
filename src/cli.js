@@ -1,5 +1,6 @@
 const ArgumentParser = require('argparse').ArgumentParser
 const request = require('request')
+const async = require('async')
 const DOMParser = require('xmldom').DOMParser
 
 var parser = new ArgumentParser({
@@ -29,9 +30,25 @@ request(args.url, (err, response, body) => {
     }
   }
 
-  segments.forEach(segment => downloadSegment(segment, () => {}))
+  segments.forEach(segment => downloadSegment(segment, () => { console.log('done')}))
 })
 
 function downloadSegment (data, callback) {
-  console.log(data)
+  let src = data.sources.filter(src => src.quality === 'Q4A' && src.delivery === 'hls')[0]
+
+  request(src.src, (err, response, body) => {
+    let m3u8Urls = body.split(/\n/g).filter(str => !str.match(/^(#.*|)$/))
+
+    downloadM3u8(data.id, m3u8Urls[0], callback)
+  })
+}
+
+function downloadM3u8 (id, url, callback) {
+  request(url, (err, response, body) => {
+    let mp4Urls = body.split(/\n/g).filter(str => !str.match(/^(#.*|)$/))
+    async.eachOf(mp4Urls, (url, index, done) => {
+      console.log(id, index, url)
+      done()
+    }, callback)
+  })
 }
