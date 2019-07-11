@@ -62,12 +62,14 @@ function downloadM3u8 (id, url, callback) {
         fs.writeFile(file, body, done)
       })
     }, () => {
-      console.log(id + ': starting ffmpeg')
-      let cmd = 'ffmpeg -i "concat:' + files.join('|') + '" -c copy -bsf:a aac_adtstoasc -y ' + id + '.mp4'
-      child_process.exec(cmd, (err, stdout, stderr) => {
-        console.log('* Wrote file ' + id + '.mp4')
-        callback()
-      })
+      ffmpegMerge(files, id + '.mp4', callback)
     })
+  })
+}
+
+function ffmpegMerge (files, output, callback) {
+  let cmd = 'ffmpeg -i "concat:' + files.join('|') + '" -c copy -bsf:a aac_adtstoasc -y ' + output
+  child_process.exec(cmd, (err, stdout, stderr) => {
+    callback(err)
   })
 }
