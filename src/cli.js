@@ -32,7 +32,21 @@ request(args.url, (err, response, body) => {
     }
   }
 
-  segments.forEach(segment => downloadSegment(segment, () => { console.log('done')}))
+  let urlParts = args.url.split(/\//g)
+
+  if (urlParts.length === 10) {
+    let id = urlParts[9]
+    let segment = segments.filter(segment => segment.id === id)
+    downloadSegment(segment,
+      () => { console.log('done') }
+    )
+  } else {
+    async.eachOf(segments, (segment, callback) => {
+      downloadSegment(segment, callback)
+    }, (err) => {
+      ffmpegMerge(segments.map(segment => segment.id + '.mp4'), urlParts[7] + '.mp4', (err) => { console.log('done') })
+    })
+  }
 })
 
 function downloadSegment (data, callback) {
